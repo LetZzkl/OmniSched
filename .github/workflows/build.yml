@@ -40,10 +40,10 @@ jobs:
         cp -r META-INF module_out/
         
         cd module_out
-        zip -r9 ../OmniSched-V2-${{ steps.date.outputs.today }}.zip .
+        zip -r9 ../OmniSched-V2-Release.zip .
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v6
       with:
         name: OmniSched-V2-Release-${{ steps.date.outputs.today }}
-        path: OmniSched-V2-Artifact.zip
+        path: OmniSched-V2-Release.zip
