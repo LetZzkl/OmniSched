@@ -4,34 +4,13 @@
 #include <vector>
 #include <algorithm>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
 #include <dirent.h>
+#include <cstring>
 
 void init_daemon() {
-    pid_t pid = fork();
-    if (pid < 0) exit(EXIT_FAILURE);
-    if (pid > 0) exit(EXIT_SUCCESS); 
-    
-    if (setsid() < 0) exit(EXIT_FAILURE); 
-    
-    pid = fork();
-    if (pid < 0) exit(EXIT_FAILURE);
-    if (pid > 0) exit(EXIT_SUCCESS); 
-    
-    umask(0);
-    chdir("/"); 
-
-    int fd = open("/dev/null", O_RDWR);
-    if (fd >= 0) {
-        dup2(fd, STDIN_FILENO);
-        dup2(fd, STDOUT_FILENO);
-        dup2(fd, STDERR_FILENO);
-        if (fd > 2) close(fd);
+    // 切換目錄至 "/" 並將標準輸出導向 /dev/null
+    if (daemon(0, 0) < 0) {
+        exit(EXIT_FAILURE);
     }
 }
 

@@ -1,14 +1,10 @@
 # OmniSched 核心靜態屬性配置
 # 說明：存放不依賴處理器型號的通用唯讀屬性。
 
-# Vulkan Core Settings
-debug.hwui.renderer=skiavk
-ro.hwui.use_vulkan=true
-debug.renderengine.backend=skiavk
-debug.renderengine.graphite=true
+# Core Settings
 hwui.render_dirty_regions=true
 ro.config.enable.hw_accel=true
-debug.sf.enable_hwc_vds=1
+debug.sf.enable_hwc_vds=0
 debug.sf.latch_unsignaled=1
 
 # System and UI rendering
