@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniSched 核心仪表板</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #3DDC84; /* Android 绿 */
+            --text-color: #ffffff;
+            --text-secondary: #aaaaaa;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .title { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+        .subtitle { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 16px; }
+        
+        .switch-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #333;
+        }
+        .switch-container:last-child { border-bottom: none; }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #555;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px; width: 20px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
+        
+        .range-container { margin-top: 12px; }
+        .range-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        input[type=range] { width: 100%; accent-color: var(--primary-color); }
+        
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 10px 20px;
+            border-radius: 8px; opacity: 0; transition: opacity 0.3s;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="title">OmniSched V3 配置</div>
+        <div class="subtitle">设置将自动保存并由守护进程即时热重载</div>
+
+        <div class="range-container">
+            <div class="range-header">
+                <span>兜底巡检间隔 (秒)</span>
+                <span id="interval-val">900</span>
+            </div>
+            <input type="range" id="poll-interval" min="300" max="3600" step="300" value="900">
+        </div>
+
+        <div class="switch-container">
+            <div>
+                <div>强制 Vulkan 渲染</div>
+                <div style="font-size: 0.8rem; color: #aaa; margin-top: 4px;">Android 14+ 推荐开启以降低 GPU 负载</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="force-vulkan">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="switch-container">
+            <div>
+                <div>背景严格锁死小核</div>
+                <div style="font-size: 0.8rem; color: #aaa; margin-top: 4px;">将后台进程隔离于 Little Cluster</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="bg-little-only">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">设定已保存并应用</div>
+
+    <script>
+        const CONFIG_PATH = "/data/adb/omnisched/config.json";
+
+        let omniConfig = {
+            poll_interval_seconds: 900,
+            cpuset: { background_little_core_only: true },
+            render: { force_vulkan: true }
+        };
+
+        const elInterval = document.getElementById('poll-interval');
+        const elIntervalVal = document.getElementById('interval-val');
+        const elForceVulkan = document.getElementById('force-vulkan');
+        const elBgLittleOnly = document.getElementById('bg-little-only');
+        const toast = document.getElementById('toast');
+
+        async function loadConfig() {
+            try {
+                const { errno, stdout, stderr } = await ksu.exec(`cat ${CONFIG_PATH}`);
+                if (errno === 0 && stdout) {
+                    const parsed = JSON.parse(stdout);
+                    omniConfig = { ...omniConfig, ...parsed };
+                    
+                    if (parsed.cpuset) omniConfig.cpuset = { ...omniConfig.cpuset, ...parsed.cpuset };
+                    if (parsed.render) omniConfig.render = { ...omniConfig.render, ...parsed.render };
+                }
+            } catch (e) {
+                console.log("配置读取失败或不存在，使用默认值。");
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            elInterval.value = omniConfig.poll_interval_seconds;
+            elIntervalVal.textContent = omniConfig.poll_interval_seconds;
+            elForceVulkan.checked = omniConfig.render.force_vulkan;
+            elBgLittleOnly.checked = omniConfig.cpuset.background_little_core_only;
+        }
+
+        async function saveConfig() {
+            omniConfig.poll_interval_seconds = parseInt(elInterval.value);
+            omniConfig.render.force_vulkan = elForceVulkan.checked;
+            omniConfig.cpuset.background_little_core_only = elBgLittleOnly.checked;
+
+            const jsonString = JSON.stringify(omniConfig, null, 2);
+            await ksu.exec(`echo '${jsonString}' > ${CONFIG_PATH}`);
+            
+            showToast();
+        }
+
+        function showToast() {
+            toast.style.opacity = 1;
+            setTimeout(() => toast.style.opacity = 0, 2000);
+        }
+
+        elInterval.addEventListener('input', (e) => elIntervalVal.textContent = e.target.value);
+        elInterval.addEventListener('change', saveConfig);
+        elForceVulkan.addEventListener('change', saveConfig);
+        elBgLittleOnly.addEventListener('change', saveConfig);
+
+        loadConfig();
+    </script>
+</body>
+</html>

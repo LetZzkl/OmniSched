@@ -39,6 +39,8 @@ jobs:
 
         cp module/system.prop module/post-fs-data.sh module/service.sh module_out/
 
+        cp -r webroot module_out/
+
         cp -r META-INF module_out/
         
         cd module_out

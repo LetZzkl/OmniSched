@@ -9,6 +9,13 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--gc-sections -s -flto
 
 include_directories(include)
 
+include(FetchContent)
+FetchContent_Declare(json
+    URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
+
 file(GLOB SOURCES "src/*.cpp")
 
 add_executable(omnisched ${SOURCES})
+target_link_libraries(omnisched PRIVATE nlohmann_json::nlohmann_json)
