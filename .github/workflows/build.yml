@@ -1,4 +1,4 @@
-name: Build OmniSched V2
+name: Build OmniSched v3
 
 on:
   push:
@@ -44,10 +44,10 @@ jobs:
         cp -r META-INF module_out/
         
         cd module_out
-        zip -r9 ../OmniSched-V2-Release.zip .
+        zip -r9 ../OmniSched-v3-Release.zip .
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v6
       with:
-        name: OmniSched-V2-Release-${{ steps.date.outputs.today }}
-        path: OmniSched-V2-Release.zip
+        name: OmniSched-v3-Release-${{ steps.date.outputs.today }}
+        path: OmniSched-v3-Release.zip
