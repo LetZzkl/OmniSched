@@ -1,12 +1,14 @@
 #include "core_sched.h"
 #include <unistd.h>
+#include <thread>
+#include <chrono>
 
 int main() {
     init_daemon();
 
     while (true) {
         apply_core_optimizations();
-        sleep(900); // 900 秒 = 15 分鐘
+        std::this_thread::sleep_for(std::chrono::minutes(15));
     }
 
     return 0;

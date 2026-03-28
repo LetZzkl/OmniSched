@@ -8,6 +8,13 @@ if [ -n "$A_API" ] && [ "$A_API" -lt 31 ]; then
     exit 0
 fi
 
+# Android 14+ 專屬記憶體調優
+if [ "$A_API" -ge 34 ]; then
+    resetprop -n ro.lmk.use_minfree_levels true
+    resetprop -n ro.lmk.enhance_batch_kill true
+    resetprop -n ro.lmk.swap_util_max 90
+fi
+
 # 渲染引擎動態分配
 SOC_MAKER=$(getprop ro.soc.manufacturer)
 
