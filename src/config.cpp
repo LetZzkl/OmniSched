@@ -14,19 +14,21 @@ void OmniConfig::reload() {
     std::ifstream file("/data/adb/omnisched/config.json");
     if (!file.is_open()) return;
 
-    try {
-        json data = json::parse(file);
-        current_config.poll_interval_seconds = data.value("poll_interval_seconds", 900);
-        
-        if (data.contains("cpuset") && data["cpuset"].is_object()) {
-            current_config.background_little_core_only = 
-                data["cpuset"].value("background_little_core_only", true);
-        }
-        
-        if (data.contains("render") && data["render"].is_object()) {
-            current_config.force_vulkan = 
-                data["render"].value("force_vulkan", true);
-        }
-    } catch (const json::exception& e) {
+    json data = json::parse(file, nullptr, false);
+    
+    if (data.is_discarded()) {
+        return;
+    }
+
+    current_config.poll_interval_seconds = data.value("poll_interval_seconds", 900);
+    
+    if (data.contains("cpuset") && data["cpuset"].is_object()) {
+        current_config.background_little_core_only = 
+            data["cpuset"].value("background_little_core_only", true);
+    }
+    
+    if (data.contains("render") && data["render"].is_object()) {
+        current_config.force_vulkan = 
+            data["render"].value("force_vulkan", true);
     }
 }
