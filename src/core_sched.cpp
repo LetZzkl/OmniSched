@@ -97,8 +97,14 @@ void apply_core_optimizations() {
     }
 
     if (config.force_vulkan) {
+        root.set_system_prop("ro.hwui.renderer", "skiavk");
         root.set_system_prop("debug.hwui.renderer", "skiavk");
+        root.set_system_prop("debug.renderengine.backend", "skiavk");
+        root.set_system_prop("ro.hwui.use_vulkan", "true");
     } else {
+        root.set_system_prop("ro.hwui.renderer", "skia");
         root.set_system_prop("debug.hwui.renderer", "skiagl");
+        root.set_system_prop("debug.renderengine.backend", "skiagl");
+        root.set_system_prop("ro.hwui.use_vulkan", "false");
     }
 }

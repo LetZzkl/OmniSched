@@ -24,7 +24,7 @@ public:
     std::string get_name() const override { return "KernelSU"; }
 
     bool set_system_prop(const std::string& key, const std::string& value) const override {
-        std::string cmd = "setprop " + key + " " + value;
+        std::string cmd = "resetprop -n " + key + " " + value;
         execute_command(cmd.c_str());
         return true;
     }
@@ -40,7 +40,7 @@ public:
     std::string get_name() const override { return "APatch"; }
 
     bool set_system_prop(const std::string& key, const std::string& value) const override {
-        std::string cmd = "setprop " + key + " " + value;
+        std::string cmd = "resetprop -n " + key + " " + value;
         execute_command(cmd.c_str());
         return true;
     }
