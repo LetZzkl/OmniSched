@@ -43,10 +43,10 @@ CONFIG_DIR="/data/adb/omnisched"
 if [ ! -d "$CONFIG_DIR" ]; then
     ui_print "- 正在建立动态配置环境 (WebUI 支援)..."
     mkdir -p "$CONFIG_DIR"
-    
+    ui_print "- 正在编写核心配置..."
     cat <<EOF > "$CONFIG_DIR/config.json"
 {
-  "poll_interval_seconds": 911,
+  "poll_interval_seconds": 950,
   "cpuset": {
     "background_little_core_only": true
   },
@@ -60,7 +60,7 @@ fi
 sleep 0.2
 ui_print "- 正在设定权限..."
 set_perm_recursive "$MODPATH" 0 0 0755 0755
-set_perm_recursive "$CONFIG_DIR" 0 0 0755 0644
+set_perm_recursive "$CONFIG_DIR" 0 0 0755 0754
 
 ui_print " "
 ui_print "========================================="
