@@ -38,22 +38,14 @@ fi
 
 ui_print "-"
 ui_print "- 正在部署核心调度文件..."
-
+ui_print "-"
+ui_print "- 正在建立动态配置环境 (WebUI 支援)..." 
+ui_print "- 正在编写核心配置..."
 CONFIG_DIR="/data/adb/omnisched"
 if [ ! -d "$CONFIG_DIR" ]; then
-    ui_print "- 正在建立动态配置环境 (WebUI 支援)..."
     mkdir -p "$CONFIG_DIR"
-    ui_print "- 正在编写核心配置..."
     cat <<EOF > "$CONFIG_DIR/config.json"
-{
-  "poll_interval_seconds": 950,
-  "cpuset": {
-    "background_little_core_only": true
-  },
-  "render": {
-    "force_vulkan": true
-  }
-}
+{"poll_interval_seconds":950,"cpuset":{"background_little_core_only":true},"render":{"force_vulkan":true}}
 EOF
 fi
 
