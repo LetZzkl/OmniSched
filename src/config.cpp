@@ -20,7 +20,7 @@ void OmniConfig::reload() {
         return;
     }
 
-    current_config.poll_interval_seconds = data.value("poll_interval_seconds", 900);
+    current_config.poll_interval_seconds = data.value("poll_interval_seconds", 950);
     
     if (data.contains("cpuset") && data["cpuset"].is_object()) {
         current_config.background_little_core_only = 

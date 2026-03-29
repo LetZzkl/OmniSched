@@ -1,5 +1,7 @@
 #include "core_sched.h"
 #include "cpu_topology.h"
+#include "config.h"
+#include "root_adapter.h"
 #include "utils.h"
 #include <vector>
 #include <unistd.h>
@@ -29,7 +31,9 @@ void apply_memory_optimizations() {
 
 void apply_core_optimizations() {
     const auto& topology = CpuTopology::get(); 
-    
+    const auto& config = OmniConfig::get();
+    const auto& root = RootEnvironment::get_adapter();
+
     apply_memory_optimizations();
 
     write_node("/dev/cpuset/top-app/cpus", topology.all_cores.c_str());
@@ -43,7 +47,12 @@ void apply_core_optimizations() {
     
     const std::string sys_bg_cpus = combine_cpus(topology.cluster_little, topology.cluster_mid);
     write_node("/dev/cpuset/system-background/cpus", sys_bg_cpus.c_str());
-    write_node("/dev/cpuset/background/cpus", topology.cluster_little.c_str());
+
+    if (config.background_little_core_only) {
+        write_node("/dev/cpuset/background/cpus", topology.cluster_little.c_str());
+    } else {
+        write_node("/dev/cpuset/background/cpus", sys_bg_cpus.c_str());
+    }
 
     if (path_exists("/dev/cpuset/top-app/uclamp.min")) {
         write_node("/dev/cpuset/top-app/uclamp.max", "max");
@@ -85,5 +94,11 @@ void apply_core_optimizations() {
             }
         }
         closedir(devfreq_dir);
+    }
+
+    if (config.force_vulkan) {
+        root.set_system_prop("debug.hwui.renderer", "skiavk");
+    } else {
+        root.set_system_prop("debug.hwui.renderer", "skiagl");
     }
 }
