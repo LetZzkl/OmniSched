@@ -2,7 +2,7 @@ name: Build OmniSched v3
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
