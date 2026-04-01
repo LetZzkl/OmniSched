@@ -24,7 +24,6 @@ if [ "$API" -lt 31 ]; then
     abort "! 安裝已中止。"
 fi
 
-# 内核硬件平台侦测与提示
 if [ -d "/sys/class/kgsl" ] || echo "$SOC_MAKER" | grep -qi "Qualcomm"; then
     ui_print "- 侦测到高通 Snapdragon 平台！"
     ui_print "- 已启用 QTI 专属底层优化与 ZRAM 配置。"
@@ -34,6 +33,31 @@ elif echo "$SOC_MAKER" | grep -qi "MediaTek" || echo "$SOC_MAKER" | grep -qi "MT
 else
     ui_print "- 侦测到通用平台。"
     ui_print "- 将套用动态通用型调度与稍后选择的渲染引擎。"
+fi
+
+SCENE_PKG="com.omarea.vtools"
+SCENE_PREFS="/data/data/$SCENE_PKG/shared_prefs"
+GAMES_ARRAY="[]"
+
+if pm path $SCENE_PKG >/dev/null 2>&1; then
+    ui_print "-侦测到 Scene，正在提取游戏清单..."
+    if [ -d "$SCENE_PREFS" ]; then
+        SCENE_APPS=$(grep -hEo 'name="[a-zA-Z0-9_.]+"' $SCENE_PREFS/*.xml 2>/dev/null | cut -d '"' -f 2 | grep -E "\." | grep -v "$SCENE_PKG")
+        
+        if [ -n "$SCENE_APPS" ]; then
+            VALID_GAMES=""
+            for pkg in $SCENE_APPS; do
+                if pm path $pkg >/dev/null 2>&1; then
+                    VALID_GAMES="$VALID_GAMES $pkg"
+                fi
+            done
+            
+            if [ -n "$VALID_GAMES" ]; then
+                GAMES_ARRAY=$(echo "$VALID_GAMES" | awk '{for(i=1;i<=NF;i++) {if(i>1)printf ","; printf "\"%s\"", $i}}' | sed 's/^/[/;s/$/]/')
+                ui_print "- [联动] 成功导入 $(echo $VALID_GAMES | wc -w) 个游戏项目"
+            fi
+        fi
+    fi
 fi
 
 ui_print "-"
@@ -65,12 +89,15 @@ CONFIG_DIR="/data/adb/omnisched"
 if [ ! -d "$CONFIG_DIR" ]; then
     mkdir -p "$CONFIG_DIR"
     cat <<EOF > "$CONFIG_DIR/config.json"
-{"poll_interval_seconds":950,"cpuset":{"background_little_core_only":true},"render":{"force_vulkan":${VK_FORCE}}}
+{"poll_interval_seconds":950,"cpuset":{"background_little_core_only":true},"render":{"force_vulkan":${VK_FORCE}},"current_profile":"balance","game_mode_enabled":false,"lite_mode_enabled":false,"gamelist":$GAMES_ARRAY}
 EOF
 else
     sed -i "s/\"force_vulkan\"\s*:\s*[a-z]*/\"force_vulkan\":${VK_FORCE}/g" "$CONFIG_DIR/config.json"
     if ! grep -q '"force_vulkan"' "$CONFIG_DIR/config.json"; then
         sed -i 's/"render"\s*:\s*{/"render":{"force_vulkan":'"${VK_FORCE}"',/g' "$CONFIG_DIR/config.json"
+    fi
+    if ! grep -q '"gamelist"' "$CONFIG_DIR/config.json"; then
+        sed -i "s/}$/,\"gamelist\":$GAMES_ARRAY}/" "$CONFIG_DIR/config.json"
     fi
 fi
 
